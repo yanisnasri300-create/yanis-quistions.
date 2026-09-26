@@ -3,69 +3,69 @@ import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+API_KEY = os.environ.get("OPENAI_API_KEY")
 
-PORT = int(os.environ.get("PORT", 10000))
+if not API_KEY:
+    print("ERROR: OPENAI_API_KEY is not set.")
+    raise SystemExit
+
+client = OpenAI(api_key=API_KEY)
 
 
-class Handler(BaseHTTPRequestHandler):
+class Server(BaseHTTPRequestHandler):
 
-    def send_json(self, data, status=200):
-        body = json.dumps(data).encode("utf-8")
-
+    def _send_json(self, data, status=200):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-
-        self.wfile.write(body)
+        self.wfile.write(
+            json.dumps(data, ensure_ascii=False).encode("utf-8")
+        )
 
     def do_OPTIONS(self):
-        self.send_response(204)
+        self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.end_headers()
 
     def do_POST(self):
-
         if self.path != "/ask":
-            self.send_json({"error": "Not found"}, 404)
+            self._send_json({"error": "Unknown path"}, 404)
             return
 
         try:
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
+            data = json.loads(body)
 
-            data = json.loads(body.decode("utf-8"))
             question = data.get("question", "").strip()
 
             if not question:
-                self.send_json({"error": "No question"}, 400)
+                self._send_json({"error": "لم يتم إرسال سؤال"}, 400)
                 return
 
             response = client.responses.create(
-                model="gpt-5.6-luna",
-                instructions="Answer the user's question clearly and helpfully.",
+                model="gpt-5-mini",
                 input=question
             )
 
-            self.send_json({
-                "answer": response.output_text
-            })
+            answer = response.output_text
+
+            self._send_json({"answer": answer})
 
         except Exception as e:
-            print("ERROR:", e, flush=True)
-            self.send_json({
-                "error": "Server error"
+            print("ERROR:", e)
+            self._send_json({
+                "error": "حدث خطأ في الخادم",
+                "details": str(e)
             }, 500)
 
 
-server = HTTPServer(("0.0.0.0", PORT))
+server = HTTPServer(("127.0.0.1", 8000), Server)
 
-print("SERVER IS RUNNING ON PORT", PORT, flush=True)
+print("Server is running...")
+print("http://127.0.0.1:8000")
 
 server.serve_forever()
