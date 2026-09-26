@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Yanis Mouhamed Amine Nasri for Questions</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0d10;
+    color: white;
+}
+
+header {
+    padding: 25px;
+    text-align: center;
+    background: #11151a;
+    border-bottom: 1px solid #292e35;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 30px;
+}
+
+header p {
+    color: #8b929d;
+}
+
+.container {
+    max-width: 950px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.chat {
+    height: 500px;
+    overflow-y: auto;
+    background: #11151a;
+    border: 1px solid #292e35;
+    border-radius: 18px;
+    padding: 25px;
+}
+
+.message {
+    max-width: 80%;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.ai {
+    background: #1b2027;
+}
+
+.user {
+    background: #526edb;
+    margin-left: auto;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+input {
+    flex: 1;
+    padding: 17px;
+    background: #11151a;
+    color: white;
+    border: 1px solid #343a43;
+    border-radius: 12px;
+    outline: none;
+    font-size: 16px;
+}
+
+button {
+    padding: 0 25px;
+    border: none;
+    border-radius: 12px;
+    background: white;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #d8d8d8;
+}
+
+footer {
+    text-align: center;
+    color: #626a75;
+    margin-top: 25px;
+}
+
+@media (max-width: 650px) {
+    .input-area {
+        flex-direction: column;
+    }
+
+    button {
+        height: 50px;
+    }
+
+    .message {
+        max-width: 95%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Yanis Mouhamed Amine Nasri for Questions</h1>
+    <p>AI Question Assistant</p>
+</header>
+
+<div class="container">
+
+    <div class="chat" id="chat">
+
+        <div class="message ai">
+            Hello! I am the AI assistant of Yanis Mouhamed Amine Nasri.
+            Ask me anything.
+        </div>
+
+    </div>
+
+    <div class="input-area">
+
+        <input
+            id="question"
+            type="text"
+            placeholder="Ask your question..."
+            autocomplete="off"
+        >
+
+        <button onclick="sendQuestion()">
+            Ask
+        </button>
+
+    </div>
+
+    <footer>
+        © 2026 Yanis Mouhamed Amine Nasri
+    </footer>
+
+</div>
+
+<script>
+
+const input = document.getElementById("question");
+const chat = document.getElementById("chat");
+
+input.addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+        sendQuestion();
+    }
+
+});
+
+function addMessage(text, type) {
+
+    const message = document.createElement("div");
+
+    message.className = "message " + type;
+
+    message.textContent = text;
+
+    chat.appendChild(message);
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendQuestion() {
+
+    const question = input.value.trim();
+
+    if (!question) {
+        return;
+    }
+
+    addMessage(question, "user");
+
+    input.value = "";
+
+    addMessage("Thinking...", "ai");
+
+    const thinking =
+        chat.lastElementChild;
+
+    try {
+
+        const response = await fetch("/ask", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                question: question
+            })
+
+        });
+
+        const data = await response.json();
+
+        thinking.textContent =
+            data.answer || "No answer received.";
+
+    } catch (error) {
+
+        thinking.textContent =
+            "The server could not be reached.";
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
